@@ -6,15 +6,15 @@ import (
 )
 
 // TransformFunc .
-type TransformFunc func (data []byte, direction bool) ([]byte, error)
+type TransformFunc func(data []byte, direction bool) ([]byte, error)
 
 // PipeTransform .
 func PipeTransform(funcs ...TransformFunc) TransformFunc {
-	return func (data []byte, isBackwardDir bool) ([]byte, error) {
-		if (isBackwardDir) {
+	return func(data []byte, isBackwardDir bool) ([]byte, error) {
+		if isBackwardDir {
 			len := len(funcs)
-			for inx := len - 1; inx > 0 ; inx-- {
-				data, err := fn(data, true)
+			for inx := len - 1; inx > 0; inx-- {
+				data, err := funcs[inx](data, true)
 				if err != nil {
 					return data, err
 				}
@@ -33,14 +33,14 @@ func PipeTransform(funcs ...TransformFunc) TransformFunc {
 
 // NoopTransform .
 func NoopTransform() TransformFunc {
-	return func (data []byte, isBackwardDir bool) ([]byte, error) {
+	return func(data []byte, isBackwardDir bool) ([]byte, error) {
 		return data, nil
 	}
 }
 
 // Base64Transform .
 func Base64Transform() TransformFunc {
-	return func (data []byte, isBackwardDir bool) ([]byte, error) {
+	return func(data []byte, isBackwardDir bool) ([]byte, error) {
 		if isBackwardDir {
 			dataStr := base64.StdEncoding.EncodeToString(data)
 			return []byte(dataStr), nil
@@ -52,7 +52,7 @@ func Base64Transform() TransformFunc {
 
 // HexTransform .
 func HexTransform() TransformFunc {
-	return func (data []byte, isBackwardDir bool) ([]byte, error) {
+	return func(data []byte, isBackwardDir bool) ([]byte, error) {
 		if isBackwardDir {
 			dataStr := hex.EncodeToString(data)
 			return []byte(dataStr), nil
