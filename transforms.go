@@ -31,6 +31,12 @@ func PipeTransform(funcs ...TransformFunc) TransformFunc {
 	}
 }
 
+func InvertTransform(fn TransformFunc) TransformFunc {
+	return func(data []byte, isBackwardDir bool) ([]byte, error) {
+		return fn(data, !isBackwardDir)
+	}
+}
+
 // NoopTransform .
 func NoopTransform() TransformFunc {
 	return func(data []byte, isBackwardDir bool) ([]byte, error) {
@@ -60,4 +66,28 @@ func HexTransform() TransformFunc {
 		data, err := hex.DecodeString(string(data))
 		return data, err
 	}
+}
+
+func TransformShare(shares []string, funcs ...TransformFunc) ([][]byte, error) {
+	var results = make([][]byte, len(shares))
+	for inx, share := range shares {
+		result, err := funcs[inx]([]byte(share), false)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+	return results, nil
+}
+
+func TransformCombine(shares [][]byte, funcs ...TransformFunc) ([]string, error) {
+	var results = make([]string, len(shares))
+	for inx, share := range shares {
+		result, err := funcs[inx]([]byte(share), true)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, string(result))
+	}
+	return results, nil
 }

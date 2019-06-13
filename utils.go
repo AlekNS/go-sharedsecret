@@ -2,7 +2,6 @@ package sharedsecret
 
 import (
 	"crypto/rand"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
@@ -29,8 +28,11 @@ func generateRandom(bits uint) (uint64, error) {
 		return 0, err
 	}
 
-	n, _ := binary.Uvarint(b)
-	// _ < 0 for large buffer, _ == 0 for small
+	var n = uint64(b[0])
+	for i := 1; i < len(b); i++ {
+		n <<= 8
+		n |= uint64(b[i])
+	}
 	return n & ((1 << bits) - 1), nil
 }
 
