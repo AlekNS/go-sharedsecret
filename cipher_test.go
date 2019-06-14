@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestTransformEncryptAES(t *testing.T) {
+func TestCipherAESTransform(t *testing.T) {
 	t.Run("should encrypt and decrypt", func(t *testing.T) {
-		tf := TransformEncryptAES([]byte("key"))
+		tf := CipherAESTransform([]byte("key"))
 		raw := []byte("test data")
 
 		enc, err := tf(raw, false)
@@ -27,7 +27,7 @@ func TestTransformEncryptAES(t *testing.T) {
 		}
 
 		t.Run("should not decrypt by invalid key", func(t *testing.T) {
-			tf := TransformEncryptAES([]byte("invlid key"))
+			tf := CipherAESTransform([]byte("invlid key"))
 			dec, err := tf(enc, true)
 			if err == nil {
 				t.Fatal("expected error, got nil")

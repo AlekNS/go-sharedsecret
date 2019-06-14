@@ -8,8 +8,8 @@ import (
 	"io"
 )
 
-// TransformEncryptAES .
-func TransformEncryptAES(key []byte) TransformFunc {
+// CipherAESTransform .
+func CipherAESTransform(key []byte) TransformFunc {
 	keyHash := sha256.Sum256(key)
 
 	return func(data []byte, isBackwardDir bool) ([]byte, error) {
