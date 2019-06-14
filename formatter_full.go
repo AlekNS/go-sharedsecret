@@ -10,6 +10,10 @@ import (
 type shamirSecretFullFormatter struct{}
 
 func (sf *shamirSecretFullFormatter) Format(secCtx SecretContext, secretID string, data string) (string, error) {
+	if len(data) == 0 {
+		return "", ErrNilEmptyData
+	}
+
 	var err error
 	var bitsBase36 string
 	var idHex string
@@ -26,7 +30,7 @@ func (sf *shamirSecretFullFormatter) Format(secCtx SecretContext, secretID strin
 		return "", err
 	}
 
-	if id%1 != 0 || id < 1 || id > idMax {
+	if id < 1 || id > idMax {
 		return "", fmt.Errorf("share id must be an integer between 1 and %v, inclusive", idMax)
 	}
 
@@ -35,11 +39,15 @@ func (sf *shamirSecretFullFormatter) Format(secCtx SecretContext, secretID strin
 
 // Given a public share, extract the bits (Integer), share ID (Integer), and share data (Hex)
 // and return an Object containing those components.
-func (sf shamirSecretFullFormatter) Parse(secCtx SecretContext, data string) (interface{}, error) {
+func (sf *shamirSecretFullFormatter) Parse(secCtx SecretContext, data string) (interface{}, error) {
 	var bits int
 	var id int
 	var idLen int
 	var max int
+
+	if len(data) == 0 {
+		return nil, ErrNilEmptyData
+	}
 
 	// Extract the first char which represents the bits in Base 36
 	uval, err := strconv.ParseUint(data[:1], 36, 8)
@@ -48,7 +56,7 @@ func (sf shamirSecretFullFormatter) Parse(secCtx SecretContext, data string) (in
 	}
 	bits = int(uval)
 
-	if bits%1 != 0 || bits < shamirDefaults.minBits || bits > shamirDefaults.maxBits {
+	if bits < shamirDefaults.minBits || bits > shamirDefaults.maxBits {
 		return nil, fmt.Errorf("invalid share : number of bits must be an integer between %d and %d, inclusive", shamirDefaults.minBits, shamirDefaults.maxBits)
 	}
 
@@ -68,8 +76,8 @@ func (sf shamirSecretFullFormatter) Parse(secCtx SecretContext, data string) (in
 		id = int(uval)
 	}
 
-	if id%1 != 0 || id < 1 || id > max {
-		return nil, fmt.Errorf("invalid share : Share id must be an integer between 1 and %d, inclusive", secCtx.MaxShares)
+	if id < 1 || id > max {
+		return nil, fmt.Errorf("invalid share : Share id must be an integer between 1 and %d, inclusive", secCtx.maxShares)
 	}
 
 	if len(shareComponents) > 0 && len(shareComponents[0]) > 2 {
@@ -82,6 +90,8 @@ func (sf shamirSecretFullFormatter) Parse(secCtx SecretContext, data string) (in
 
 	return nil, fmt.Errorf("the share data provided is invalid: %x", data)
 }
+
+func (sf *shamirSecretFullFormatter) Init() error { return nil }
 
 // NewShamirFullSecretFormatter .
 func NewShamirFullSecretFormatter(secCtx SecretContext) SecretFormatter {
