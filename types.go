@@ -1,13 +1,13 @@
 package sharedsecret
 
 type (
-	// SecretContext .
+	// SecretContext specifies data schema config
 	SecretContext struct {
-		Bits      int
-		MaxShares int
-		Radix     int
+		Bits  int
+		Radix int
 
-		size int
+		size      int
+		maxShares int
 	}
 
 	shamirSharedSecretData struct {
@@ -17,10 +17,13 @@ type (
 	}
 
 	// SecretShares .
-	SecretShares [][]byte
+	SecretShares []string
 
-	// SecretFormatter .
+	// SecretFormatter formats and parses secret shares
 	SecretFormatter interface {
+		// Init .
+		Init() error
+
 		// Format .
 		Format(secCtx SecretContext, secretID, data string) (string, error)
 
@@ -28,10 +31,15 @@ type (
 		Parse(secCtx SecretContext, data string) (interface{}, error)
 	}
 
-	// ShareSecret .
+	// ShareSecret splits and combine secret parts
 	ShareSecret interface {
+		// Share .
 		Share(secretStr string, numShares, threshold, padLength int) ([]string, error)
+
+		// Combine .
 		Combine(shares []string, at int) (string, error)
-		// NewShare(id int, shares []string) (string, error)
+
+		// NewShare .
+		NewShare(id int, shares []string) (string, error)
 	}
 )

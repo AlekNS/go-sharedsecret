@@ -15,8 +15,9 @@ func TestIndexOfIntArr(t *testing.T) {
 		args args
 		want int
 	}{
+		{"should not found in empty", args{[]int{}, 2}, -1},
 		{"should find", args{[]int{1, 2, 3}, 2}, 1},
-		{"should not found", args{[]int{1, 2, 3}, 0}, -1},
+		{"should not find", args{[]int{1, 2, 3}, 0}, -1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -28,10 +29,35 @@ func TestIndexOfIntArr(t *testing.T) {
 }
 
 func TestGenerateRandom(t *testing.T) {
-	t.Run("should generate random bytes", func(t *testing.T) {
+	t.Run("should raise error for invalid bits count", func(t *testing.T) {
+		_, err := generateRandom(128)
+		if err != ErrInvlidArgument {
+			t.Fatal("expected error, got", err)
+		}
+	})
+	t.Run("should generate random 4 bits", func(t *testing.T) {
+		largeZero := 0
+		// non determenistic
+		for i := 0; i < 1000; i++ {
+			val, err := generateRandom(4)
+			if err != nil {
+				t.Fatal("expect no errors, got", err)
+			}
+			if val&0xFFFFFFF0 > 0 {
+				t.Fatalf("expect max 4 bits, got %032bb", val)
+			}
+			if val > 0 {
+				largeZero++
+			}
+		}
+		if largeZero == 0 {
+			t.Fatal("random generate only zeros")
+		}
+	})
+	t.Run("should generate random 32 bits", func(t *testing.T) {
 		_, err := generateRandom(32)
 		if err != nil {
-			t.Error("expect no errors, got", err)
+			t.Fatal("expect no errors, got", err)
 		}
 	})
 }
@@ -48,6 +74,7 @@ func TestPadLeft(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
+		{"should returns empty", args{"", 8, 8}, "", false},
 		{"should returns same with multbits 1", args{"01", 1, 1}, "01", false},
 		{"should returns same with module by multbits", args{"0001", 4, 1}, "0001", false},
 		{"should add zeros for less seq", args{"01", 4, 1}, "0001", false},
@@ -80,6 +107,7 @@ func TestHex2bin(t *testing.T) {
 	}{
 		{"should returns empty", args{""}, "", false},
 		{"should decode to utf", args{"7f"}, "01111111", false},
+		{"should decode to utf with pad zeros", args{"07f"}, "000001111111", false},
 		{"should error for invalid hex", args{"zz"}, "", true},
 	}
 	for _, tt := range tests {
@@ -108,6 +136,7 @@ func TestBin2hex(t *testing.T) {
 	}{
 		{"should returns empty", args{""}, "", false},
 		{"should decode to hex", args{"01111111"}, "7f", false},
+		{"should decode to hex with pad zeros", args{"000001111111"}, "07f", false},
 		{"should decode to hex pad zero", args{"00001111"}, "0f", false},
 		{"should error for invalid bin", args{"zz"}, "", true},
 	}
@@ -137,7 +166,8 @@ func TestSplitNumStringToIntArray(t *testing.T) {
 		want    []int
 		wantErr bool
 	}{
-		{"should error for empty", args{"", 16, 8}, nil, true},
+		{"should error empty", args{"", 16, 8}, nil, true},
+		{"should error for invlid data", args{"1111111z", 16, 8}, nil, true},
 		{"should split to 4 bytes", args{"1111111", 32, 8}, []int{127, 0, 0, 0}, false},
 		{"should split to 2 words", args{"1111111", 32, 16}, []int{127, 0}, false},
 		{"should split to 2 bytes", args{"111101111111", 16, 8}, []int{127, 15}, false},
